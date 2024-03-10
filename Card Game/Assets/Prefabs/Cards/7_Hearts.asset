@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b90c857c007d635489a0036f7c303fd0, type: 3}
-  m_Name: AceHearts
+  m_Name: 7_Hearts
   m_EditorClassIdentifier: 
-  faceSprite: {fileID: 21300000, guid: 0237dc47b8980074dabf32840c0e25ab, type: 3}
+  faceSprite: {fileID: 21300000, guid: b35adf3d8a8c48442a579a4c9ea24c03, type: 3}
   backSprite: {fileID: 21300000, guid: fbccca73d29a7894e83e2d9b52192719, type: 3}
-  value: 1
+  value: 7
