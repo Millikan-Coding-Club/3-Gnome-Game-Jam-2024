@@ -1134,6 +1134,10 @@ PrefabInstance:
       value: GameManager
       objectReference: {fileID: 0}
     - target: {fileID: 4349748482713805868, guid: e9c965a4b0ed155488ecf93c589f6443, type: 3}
+      propertyPath: button
+      value: 
+      objectReference: {fileID: 1464670125}
+    - target: {fileID: 4349748482713805868, guid: e9c965a4b0ed155488ecf93c589f6443, type: 3}
       propertyPath: targetText
       value: 
       objectReference: {fileID: 1268536305}
