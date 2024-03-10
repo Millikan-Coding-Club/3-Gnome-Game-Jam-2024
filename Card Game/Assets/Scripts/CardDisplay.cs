@@ -23,12 +23,12 @@ public class CardDisplay : MonoBehaviour
 
     private void OnMouseDown()
     {
+        cardImage.color = Color.white;
         if (letPlayerFlip && letPlayerFlipGlobal) {flip();}
     }
 
     public void flip()
     {
-        Debug.Log(letPlayerFlipGlobal);
         StartCoroutine(flipCard());
     }
 
@@ -95,5 +95,15 @@ public class CardDisplay : MonoBehaviour
             letPlayerFlipGlobal = false;
             Debug.Log("You winned :)");
         }
+    }
+
+    private void OnMouseEnter()
+    {
+        if (letPlayerFlip && letPlayerFlipGlobal) { cardImage.color = new Color(0.8f, 0.8f, 0.8f, 1); }
+    }
+
+    private void OnMouseExit()
+    {
+        cardImage.color = Color.white;
     }
 }
