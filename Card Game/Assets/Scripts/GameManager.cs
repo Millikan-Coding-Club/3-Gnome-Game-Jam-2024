@@ -15,9 +15,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text targetText;
 
     private GameObject card;
-    private int target = 0;
+    static public int target = 0;
     private int targetCardCount;
-    public int playerGuess = 0;
+    static public int playerGuess = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -35,12 +35,6 @@ public class GameManager : MonoBehaviour
         Invoke("flipAllCards", 3);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     private void SetTarget()
     {
         target = 0;
@@ -51,8 +45,7 @@ public class GameManager : MonoBehaviour
             if (targetCardCount >= 1)
             {
                 int rand = Random.Range(1, handCopy.Count);
-                // 1/2 chance to add 11 instead of 1 for aces
-                if (handCopy[rand].value == 1 && Random.Range(0, 1) == 1)
+                if (handCopy[rand].value == 1 && Random.Range(0, 1) == 1) // 1/2 chance to add 11 instead of 1 for aces
                 {
                     target += 11;
                 } else
@@ -72,7 +65,6 @@ public class GameManager : MonoBehaviour
         foreach (GameObject obj in handObjects)
         {
             obj.GetComponent<CardDisplay>().flip();
-            obj.GetComponent<CardDisplay>().letPlayerFlip = true;
         }
     }
 }

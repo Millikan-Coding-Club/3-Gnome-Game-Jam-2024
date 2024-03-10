@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b90c857c007d635489a0036f7c303fd0, type: 3}
+  m_Name: 10_Clubs
+  m_EditorClassIdentifier: 
+  faceSprite: {fileID: 21300000, guid: c0b4b53e7c1a64247b92585c3af5e02d, type: 3}
+  backSprite: {fileID: 21300000, guid: fbccca73d29a7894e83e2d9b52192719, type: 3}
+  value: 10
