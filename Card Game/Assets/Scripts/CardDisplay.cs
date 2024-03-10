@@ -10,7 +10,8 @@ public class CardDisplay : MonoBehaviour
     public Canvas cardCanvas;
     public Image cardImage;
 
-    public bool letPlayerFlip = false;
+    private bool letPlayerFlip = false;
+    static private bool letPlayerFlipGlobal = true;
     private bool guessIsCorrect = false;
     static private int aceCount = 0;
 
@@ -22,11 +23,12 @@ public class CardDisplay : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if (letPlayerFlip) {flip();}
+        if (letPlayerFlip && letPlayerFlipGlobal) {flip();}
     }
 
     public void flip()
     {
+        Debug.Log(letPlayerFlipGlobal);
         StartCoroutine(flipCard());
     }
 
@@ -49,10 +51,11 @@ public class CardDisplay : MonoBehaviour
                 cardImage.transform.Rotate(0, 1f, 0);
                 yield return new WaitForSeconds(0.001f);
             }
-            letPlayerFlip = true;
+            letPlayerFlip = letPlayerFlipGlobal;
         } else
         {
             // Card is face down
+            letPlayerFlip = false;
             while (yRotation > 90)
             {
                 yRotation -= 1f;
@@ -89,6 +92,7 @@ public class CardDisplay : MonoBehaviour
 
         if (guessIsCorrect)
         {
+            letPlayerFlipGlobal = false;
             Debug.Log("You winned :)");
         }
     }
