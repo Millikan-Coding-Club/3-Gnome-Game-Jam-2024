@@ -9,15 +9,16 @@ public class CardDisplay : MonoBehaviour
     public Card card;
     public Canvas cardCanvas;
     public Image cardImage;
+    private GameObject manager;
 
     private bool letPlayerFlip = false;
-    static private bool letPlayerFlipGlobal = true;
-    private bool guessIsCorrect = false;
-    static private int aceCount = 0;
+    static public bool letPlayerFlipGlobal = true;
+    public bool isFlipped = false;
 
     // Start is called before the first frame update
     void Start()
     {
+        manager = GameObject.Find("GameManager");
         cardImage.sprite = card.faceSprite;
     }
 
@@ -35,65 +36,41 @@ public class CardDisplay : MonoBehaviour
     public IEnumerator flipCard()
     {
         float yRotation = cardImage.transform.rotation.eulerAngles.y;
-        if (yRotation == 0)
+        if (!isFlipped)
         {
             // Card is face up
-            while (yRotation < 90)
+            for (int i = 0; i < 180; i++)
             {
-                yRotation += 1f;
-                cardImage.transform.Rotate(0, 1f, 0);
+                if (i == 90)
+                {
+                    cardImage.sprite = card.backSprite;
+                }
+                cardImage.transform.Rotate(0, 1, 0);
+                yRotation = cardImage.transform.rotation.eulerAngles.y;
                 yield return new WaitForSeconds(0.001f);
             }
-            cardImage.sprite = card.backSprite;
-            while (yRotation < 180)
-            {
-                yRotation += 1f;
-                cardImage.transform.Rotate(0, 1f, 0);
-                yield return new WaitForSeconds(0.001f);
-            }
+
             letPlayerFlip = letPlayerFlipGlobal;
+            isFlipped = true;
+
         } else
         {
             // Card is face down
             letPlayerFlip = false;
-            while (yRotation > 90)
+            for (int i = 180; i > 0; i--)
             {
-                yRotation -= 1f;
-                cardImage.transform.Rotate(0, -1f, 0);
-                yield return new WaitForSeconds(0.001f);
-            }
-            cardImage.sprite = card.faceSprite;
-            while (yRotation > 0)
-            {
-                yRotation -= 1f;
-                cardImage.transform.Rotate(0, -1f, 0);
-                yield return new WaitForSeconds(0.001f);
-                // TODO: fix card flip
-            }
-            GameManager.playerGuess += card.value;
-            if (card.value == 1) { aceCount++; }
-        }
-        // Check player's guess after they flip a card
-        if (GameManager.playerGuess == GameManager.target)
-        {
-            guessIsCorrect = true;
-        }
-
-        if (!guessIsCorrect) // Accounts for aces
-        {
-            for (int i = 1; i <= aceCount; i++)
-            {
-                if (GameManager.playerGuess + 10 * i == GameManager.target)
+                if (i == 90)
                 {
-                    guessIsCorrect = true;
+                    cardImage.sprite = card.faceSprite;
                 }
+                cardImage.transform.Rotate(0, -1, 0);
+                yRotation = cardImage.transform.rotation.eulerAngles.y;
+                yield return new WaitForSeconds(0.001f);
             }
-        }
 
-        if (guessIsCorrect)
-        {
-            letPlayerFlipGlobal = false;
-            Debug.Log("You winned :)");
+            isFlipped = false;
+            GameManager.playerGuess += card.value;
+            if (card.value == 1) { GameManager.aceCount++; }
         }
     }
 

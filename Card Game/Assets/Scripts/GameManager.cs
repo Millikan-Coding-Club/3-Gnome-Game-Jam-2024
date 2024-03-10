@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using UnityEngine.UIElements;
 using Unity.VisualScripting;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,11 +13,14 @@ public class GameManager : MonoBehaviour
     private List<GameObject> handObjects = new List<GameObject>();
     public Transform[] cardSpawns;
     [SerializeField] private TMP_Text targetText;
-
     private GameObject card;
+    [SerializeField] private GameObject button;
+
     static public int target = 0;
     private int targetCardCount;
     static public int playerGuess = 0;
+    static public int aceCount = 0;
+    private bool guessIsCorrect = false;
 
     // Start is called before the first frame update
     void Start()
@@ -60,11 +63,50 @@ public class GameManager : MonoBehaviour
         targetText.text = target.ToString();
     }
 
-    private void flipAllCards()
+    public void flipAllCards()
     {
         foreach (GameObject obj in handObjects)
         {
-            obj.GetComponent<CardDisplay>().flip();
+            if (!obj.GetComponent<CardDisplay>().isFlipped)
+            {
+                obj.GetComponent<CardDisplay>().flip();
+            }
+        }
+        if (!guessIsCorrect)
+        {
+            button.GetComponent<Button>().interactable = true;
+        }
+    }
+
+    public void playCards()
+    {
+        // Compare player's guess to target
+        if (playerGuess == target)
+        {
+            guessIsCorrect = true;
+        }
+
+        if (!guessIsCorrect) // Accounts for aces
+        {
+            for (int i = 1; i <= aceCount; i++)
+            {
+                if (playerGuess + 10 * i == target)
+                {
+                    guessIsCorrect = true;
+                }
+            }
+            aceCount = 0;
+        }
+
+        if (guessIsCorrect)
+        {
+            CardDisplay.letPlayerFlipGlobal = false;
+            button.GetComponent<Button>().interactable = false;
+            Invoke("flipAllCards", 1);
+            Debug.Log("You winned :)");
+        } else
+        {
+            Debug.Log("wronged >:(");
         }
     }
 }
