@@ -49,7 +49,6 @@ MonoBehaviour:
   card: {fileID: 11400000, guid: a5ebc052495d43a4fbc223f6b51ec82f, type: 2}
   cardCanvas: {fileID: 2423197324149873163}
   cardImage: {fileID: 4887827776601671660}
-  manager: {fileID: 309319253236066027, guid: e9c965a4b0ed155488ecf93c589f6443, type: 3}
   isFlipped: 0
 --- !u!61 &6804530870167797621
 BoxCollider2D:

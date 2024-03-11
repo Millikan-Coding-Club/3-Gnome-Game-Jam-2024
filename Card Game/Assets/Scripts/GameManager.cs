@@ -11,10 +11,12 @@ public class GameManager : MonoBehaviour
     public List<Card> deck = new List<Card>();
     private List<Card> hand = new List<Card>();
     private List<GameObject> handObjects = new List<GameObject>();
+    static public List<GameObject> playedCards = new List<GameObject>();
     public Transform[] cardSpawns;
     [SerializeField] private TMP_Text targetText;
     private GameObject card;
     [SerializeField] private GameObject button;
+    public GameObject deckPrefab;
 
     static public int target = 0;
     private int targetCardCount;
@@ -25,17 +27,18 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        StartCoroutine(setUpCards());
+        Invoke("flipAllCards", 3);
+    }
+
+    private IEnumerator setUpCards()
+    {
         for (int i = 0; i < cardSpawns.Length; i++)
         {
-            int rand = Random.Range(0, deck.Count);
-            card = Instantiate(cardPrefab, cardSpawns[i].transform.position, cardSpawns[0].transform.rotation);
-            card.GetComponent<CardDisplay>().card = deck[rand];
-            deck.RemoveAt(rand);
-            hand.Add(card.GetComponent<CardDisplay>().card);
-            handObjects.Add(card);
+            StartCoroutine(drawCard(cardSpawns[i].position));
+            yield return new WaitForSeconds(0.1f);
         }
         SetTarget();
-        Invoke("flipAllCards", 3);
     }
 
     private void SetTarget()
@@ -78,7 +81,12 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void playCards()
+    public void play()
+    {
+        StartCoroutine(playCards());
+    }
+
+    public IEnumerator playCards()
     {
         // Compare player's guess to target
         if (playerGuess == target)
@@ -100,13 +108,40 @@ public class GameManager : MonoBehaviour
 
         if (guessIsCorrect)
         {
+            Debug.Log("You winned :)");
             CardDisplay.letPlayerFlipGlobal = false;
             button.GetComponent<Button>().interactable = false;
-            Invoke("flipAllCards", 1);
-            Debug.Log("You winned :)");
+            yield return new WaitForSeconds(1);
+            foreach (GameObject obj in playedCards)
+            {
+                hand.Remove(obj.GetComponent<CardDisplay>().card);
+                handObjects.Remove(obj);
+                obj.SetActive(false);
+            }
+            foreach (GameObject obj in playedCards)
+            {
+                StartCoroutine(drawCard(obj.transform.position));
+                Destroy(obj);
+                yield return new WaitForSeconds(0.1f);
+            }
+            Invoke("flipAllCards", 3);
+            Invoke("SetTarget", 3);
         } else
         {
             Debug.Log("wronged >:(");
+        }
+    }
+
+    private IEnumerator drawCard(Vector3 position)
+    {
+        var card = Instantiate(cardPrefab, deckPrefab.transform.position, Quaternion.identity);
+        card.GetComponent<CardDisplay>().card = deck[Random.Range(0, deck.Count)];
+        hand.Add(card.GetComponent<CardDisplay>().card);
+        handObjects.Add(card);
+        while (Vector2.Distance(card.transform.position, position) > 0.01f)
+        {
+            card.transform.position += (position - card.transform.position) / 100;
+            yield return new WaitForSeconds(0.001f);
         }
     }
 }

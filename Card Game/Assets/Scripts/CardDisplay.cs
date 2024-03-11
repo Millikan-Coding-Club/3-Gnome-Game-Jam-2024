@@ -9,7 +9,6 @@ public class CardDisplay : MonoBehaviour
     public Card card;
     public Canvas cardCanvas;
     public Image cardImage;
-    private GameObject manager;
 
     private bool letPlayerFlip = false;
     static public bool letPlayerFlipGlobal = true;
@@ -18,14 +17,17 @@ public class CardDisplay : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        manager = GameObject.Find("GameManager");
         cardImage.sprite = card.faceSprite;
     }
 
     private void OnMouseDown()
     {
         cardImage.color = Color.white;
-        if (letPlayerFlip && letPlayerFlipGlobal) {flip();}
+        if (letPlayerFlip && letPlayerFlipGlobal)
+        {
+            flip();
+            GameManager.playedCards.Add(gameObject);
+        }
     }
 
     public void flip()
