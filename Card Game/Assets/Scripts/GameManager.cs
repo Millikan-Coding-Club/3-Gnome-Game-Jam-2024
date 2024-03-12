@@ -14,11 +14,13 @@ public class GameManager : MonoBehaviour
     static public List<GameObject> playedCards = new List<GameObject>();
     public Transform[] cardSpawns;
     [SerializeField] private TMP_Text targetText;
+    [SerializeField] private TMP_Text moneyText;
     private GameObject card;
     [SerializeField] private GameObject button;
     public GameObject deckPrefab;
 
     static public int target = 0;
+    private int money = 0;
     private int targetCardCount;
     static public int playerGuess = 0;
     static public int aceCount = 0;
@@ -109,9 +111,11 @@ public class GameManager : MonoBehaviour
         if (guessIsCorrect)
         {
             Debug.Log("You winned :)");
+            money += hand.Count;
             CardDisplay.letPlayerFlipGlobal = false;
             button.GetComponent<Button>().interactable = false;
             yield return new WaitForSeconds(1);
+
             foreach (GameObject obj in playedCards)
             {
                 hand.Remove(obj.GetComponent<CardDisplay>().card);
@@ -129,6 +133,19 @@ public class GameManager : MonoBehaviour
         } else
         {
             Debug.Log("wronged >:(");
+            money -= hand.Count;
+        }
+        moneyText.text = "$" + money.ToString();
+        if (money < 0)
+        {
+            moneyText.text.PadLeft(moneyText.text.Length + 1, '-');
+            moneyText.color = Color.red;
+        }  else if (money > 0)
+        {
+            moneyText.color = Color.green;
+        } else
+        {
+            moneyText.color = Color.white;
         }
     }
 
