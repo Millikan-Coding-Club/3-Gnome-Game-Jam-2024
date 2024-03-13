@@ -12,12 +12,14 @@ public class GameManager : MonoBehaviour
     private List<Card> hand = new List<Card>();
     private List<GameObject> handObjects = new List<GameObject>();
     static public List<GameObject> playedCards = new List<GameObject>();
-    public Transform[] cardSpawns;
+    private List<Transform> cardSpawns = new List<Transform>();
+    [SerializeField] private Transform cardSpawnPrefab;
     [SerializeField] private TMP_Text targetText;
     [SerializeField] private TMP_Text moneyText;
     [SerializeField] private GameObject button;
     public GameObject deckPrefab;
 
+    [SerializeField] private int startingCardAmount = 3;
     static public int target = 0;
     private int money = 0;
     private int targetCardCount;
@@ -29,14 +31,17 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        StartCoroutine(setUpCards());
+        StartCoroutine(setUp());
         Invoke("flipAllCards", 3);
     }
 
-    private IEnumerator setUpCards()
+    private IEnumerator setUp()
     {
-        for (int i = 0; i < cardSpawns.Length; i++)
+        float cardSpacing = startingCardAmount;
+        for (int i = 0; i < startingCardAmount; i++)
         {
+            Transform spawn = Instantiate(cardSpawnPrefab, new Vector2(-10 / startingCardAmount + 6, -3), Quaternion.identity);
+            cardSpawns.Add(spawn);
             StartCoroutine(drawCard(cardSpawns[i].position));
             yield return new WaitForSeconds(0.1f);
         }
@@ -52,7 +57,7 @@ public class GameManager : MonoBehaviour
         {
             if (targetCardCount >= 1)
             {
-                int rand = Random.Range(1, handCopy.Count);
+                int rand = Random.Range(0, handCopy.Count);
                 if (handCopy[rand].value == 1 && Random.Range(0, 1) == 1) // 1/2 chance to add 11 instead of 1 for aces
                 {
                     target += 11;
