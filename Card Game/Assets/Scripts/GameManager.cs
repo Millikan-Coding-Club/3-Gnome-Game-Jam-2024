@@ -15,7 +15,6 @@ public class GameManager : MonoBehaviour
     public Transform[] cardSpawns;
     [SerializeField] private TMP_Text targetText;
     [SerializeField] private TMP_Text moneyText;
-    private GameObject card;
     [SerializeField] private GameObject button;
     public GameObject deckPrefab;
 
@@ -25,6 +24,7 @@ public class GameManager : MonoBehaviour
     static public int playerGuess = 0;
     static public int aceCount = 0;
     private bool guessIsCorrect = false;
+    private int wrongGuess;
 
     // Start is called before the first frame update
     void Start()
@@ -60,7 +60,6 @@ public class GameManager : MonoBehaviour
                 {
                     target += handCopy[rand].value;
                 }
-                Debug.Log(handCopy[rand].value);
                 handCopy.RemoveAt(rand);
                 targetCardCount--;
             }
@@ -74,21 +73,54 @@ public class GameManager : MonoBehaviour
         {
             if (!obj.GetComponent<CardDisplay>().isFlipped)
             {
-                obj.GetComponent<CardDisplay>().flip();
+                obj.GetComponent<CardDisplay>().flip(false);
             }
         }
         if (!guessIsCorrect)
         {
             button.GetComponent<Button>().interactable = true;
+            CardDisplay.letPlayerFlipGlobal = true;
         }
+    }
+
+    private void startRound()
+    {
+        SetTarget();
+        playerGuess = 0;
+        wrongGuess = 0;
+        aceCount = 0;
+        playedCards.Clear();
+        guessIsCorrect = false;
+        Invoke("flipAllCards", 3);
+    }
+
+    private IEnumerator endRound()
+    {
+        CardDisplay.letPlayerFlipGlobal = false;
+        button.GetComponent<Button>().interactable = false;
+        yield return new WaitForSeconds(1);
+
+        foreach (GameObject obj in playedCards)
+        {
+            hand.Remove(obj.GetComponent<CardDisplay>().card);
+            handObjects.Remove(obj);
+            obj.SetActive(false);
+        }
+        foreach (GameObject obj in playedCards)
+        {
+            StartCoroutine(drawCard(obj.transform.position));
+            Destroy(obj);
+            yield return new WaitForSeconds(0.1f);
+        }
+        startRound();
     }
 
     public void play()
     {
-        StartCoroutine(playCards());
+        playCards();
     }
 
-    public IEnumerator playCards()
+    public void playCards()
     {
         // Compare player's guess to target
         if (playerGuess == target)
@@ -105,53 +137,46 @@ public class GameManager : MonoBehaviour
                     guessIsCorrect = true;
                 }
             }
-            aceCount = 0;
         }
 
         if (guessIsCorrect)
         {
             Debug.Log("You winned :)");
-            money += hand.Count;
-            CardDisplay.letPlayerFlipGlobal = false;
-            button.GetComponent<Button>().interactable = false;
-            yield return new WaitForSeconds(1);
-
-            foreach (GameObject obj in playedCards)
-            {
-                hand.Remove(obj.GetComponent<CardDisplay>().card);
-                handObjects.Remove(obj);
-                obj.SetActive(false);
-            }
-            foreach (GameObject obj in playedCards)
-            {
-                StartCoroutine(drawCard(obj.transform.position));
-                Destroy(obj);
-                yield return new WaitForSeconds(0.1f);
-            }
-            Invoke("flipAllCards", 3);
-            Invoke("SetTarget", 3);
-        } else
+            updateMoney(hand.Count);
+            StartCoroutine(endRound());
+        } else if (playerGuess != wrongGuess)
         {
             Debug.Log("wronged >:(");
-            money -= hand.Count;
+            wrongGuess = playerGuess;
+            updateMoney(-hand.Count);
+            if (playerGuess > target)
+            {
+                startRound();
+            }
         }
-        moneyText.text = "$" + money.ToString();
+    }
+
+    private void updateMoney(int amount)
+    {
+        money += amount;
+        moneyText.text = "$" + Mathf.Abs(money).ToString();
         if (money < 0)
         {
-            moneyText.text.PadLeft(moneyText.text.Length + 1, '-');
+            moneyText.text = moneyText.text.PadLeft(moneyText.text.Length + 1, '-');
             moneyText.color = Color.red;
-        }  else if (money > 0)
-        {
-            moneyText.color = Color.green;
-        } else
+        }
+        else if (money == 0)
         {
             moneyText.color = Color.white;
+        } else
+        {
+            moneyText.color = Color.green;
         }
     }
 
     private IEnumerator drawCard(Vector3 position)
     {
-        var card = Instantiate(cardPrefab, deckPrefab.transform.position, Quaternion.identity);
+        var card = Instantiate(cardPrefab, (Vector2)deckPrefab.transform.position, Quaternion.identity);
         card.GetComponent<CardDisplay>().card = deck[Random.Range(0, deck.Count)];
         hand.Add(card.GetComponent<CardDisplay>().card);
         handObjects.Add(card);

@@ -25,17 +25,17 @@ public class CardDisplay : MonoBehaviour
         cardImage.color = Color.white;
         if (letPlayerFlip && letPlayerFlipGlobal)
         {
-            flip();
+            flip(true);
             GameManager.playedCards.Add(gameObject);
         }
     }
 
-    public void flip()
+    public void flip(bool addCard)
     {
-        StartCoroutine(flipCard());
+        StartCoroutine(flipCard(addCard));
     }
 
-    public IEnumerator flipCard()
+    public IEnumerator flipCard(bool addCard)
     {
         float yRotation = cardImage.transform.rotation.eulerAngles.y;
         if (!isFlipped)
@@ -71,7 +71,7 @@ public class CardDisplay : MonoBehaviour
             }
 
             isFlipped = false;
-            GameManager.playerGuess += card.value;
+            if (addCard) { GameManager.playerGuess += card.value; }
             if (card.value == 1) { GameManager.aceCount++; }
         }
     }
