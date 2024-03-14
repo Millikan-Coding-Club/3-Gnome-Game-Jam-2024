@@ -992,7 +992,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4349748482713805868, guid: e9c965a4b0ed155488ecf93c589f6443, type: 3}
       propertyPath: startingCardAmount
-      value: 4
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4349748482713805868, guid: e9c965a4b0ed155488ecf93c589f6443, type: 3}
       propertyPath: deck.Array.data[13]

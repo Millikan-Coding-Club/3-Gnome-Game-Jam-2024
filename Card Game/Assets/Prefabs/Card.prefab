@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6783714749661456505}
   - component: {fileID: 327053281784549212}
+  - component: {fileID: 5183470864360961698}
   - component: {fileID: 6804530870167797621}
   m_Layer: 0
   m_Name: Card
@@ -50,6 +51,20 @@ MonoBehaviour:
   cardCanvas: {fileID: 2423197324149873163}
   cardImage: {fileID: 4887827776601671660}
   isFlipped: 0
+  flipSpeed: 1000
+--- !u!114 &5183470864360961698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1056159251946838069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c08335129a9e95a44a1c7c746cc2d934, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 0}
 --- !u!61 &6804530870167797621
 BoxCollider2D:
   m_ObjectHideFlags: 0

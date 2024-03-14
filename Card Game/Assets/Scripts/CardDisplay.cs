@@ -13,6 +13,7 @@ public class CardDisplay : MonoBehaviour
     private bool letPlayerFlip = false;
     static public bool letPlayerFlipGlobal = true;
     public bool isFlipped = false;
+    [SerializeField] float flipSpeed = 100f;
 
     // Start is called before the first frame update
     void Start()
@@ -49,7 +50,7 @@ public class CardDisplay : MonoBehaviour
                 }
                 cardImage.transform.Rotate(0, 1, 0);
                 yRotation = cardImage.transform.rotation.eulerAngles.y;
-                yield return new WaitForSeconds(0.001f);
+                yield return new WaitForSeconds(1 / flipSpeed);
             }
 
             letPlayerFlip = letPlayerFlipGlobal;
@@ -58,6 +59,8 @@ public class CardDisplay : MonoBehaviour
         } else
         {
             // Card is face down
+            if (addCard) { GameManager.playerGuess += card.value; }
+            if (card.value == 1 && addCard) { GameManager.aceCount++; }
             letPlayerFlip = false;
             for (int i = 180; i > 0; i--)
             {
@@ -67,12 +70,9 @@ public class CardDisplay : MonoBehaviour
                 }
                 cardImage.transform.Rotate(0, -1, 0);
                 yRotation = cardImage.transform.rotation.eulerAngles.y;
-                yield return new WaitForSeconds(0.001f);
+                yield return new WaitForSeconds(1 / flipSpeed);
             }
-
             isFlipped = false;
-            if (addCard) { GameManager.playerGuess += card.value; }
-            if (card.value == 1) { GameManager.aceCount++; }
         }
     }
 

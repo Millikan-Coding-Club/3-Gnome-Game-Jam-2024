@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviour
     private List<GameObject> handObjects = new List<GameObject>();
     static public List<GameObject> playedCards = new List<GameObject>();
     private List<Transform> cardSpawns = new List<Transform>();
+    private Transform spawn;
     [SerializeField] private Transform cardSpawnPrefab;
     [SerializeField] private TMP_Text targetText;
     [SerializeField] private TMP_Text moneyText;
@@ -31,21 +32,63 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        StartCoroutine(setUp());
+        setUp();
         Invoke("flipAllCards", 3);
     }
 
-    private IEnumerator setUp()
+    private void setUp()
     {
-        float cardSpacing = startingCardAmount;
+        /*
+        float leftMostPosition = 15f / startingCardAmount - 9f;
+        float cardSpacing = 2f / Mathf.Max(1f, startingCardAmount - 1f) * -leftMostPosition;
         for (int i = 0; i < startingCardAmount; i++)
         {
-            Transform spawn = Instantiate(cardSpawnPrefab, new Vector2(-10 / startingCardAmount + 6, -3), Quaternion.identity);
+            spawn = Instantiate(cardSpawnPrefab, transform.position, Quaternion.identity);
             cardSpawns.Add(spawn);
-            StartCoroutine(drawCard(cardSpawns[i].position));
+            drawCards(startingCardAmount);
+            yield return new WaitForSeconds(0.1f);
+            /*
+            if (startingCardAmount > 1)
+            {
+                spawn = Instantiate(cardSpawnPrefab, new Vector2(leftMostPosition + i * cardSpacing, -3), Quaternion.identity);
+            } else
+            {
+                spawn = Instantiate(cardSpawnPrefab, new Vector2(0, -3), Quaternion.identity);
+            }
+            
+        }
+        */
+        StartCoroutine(drawCards(startingCardAmount));
+        SetTarget();
+    }
+
+    private IEnumerator drawCards(int amount)
+    {
+        for (int i = 0; i < amount; i++) // Create card spawns
+        {
+            cardSpawns.Add(Instantiate(cardSpawnPrefab, transform.position, Quaternion.identity));
+        }
+        float leftMostPosition = 20f / cardSpawns.Count - 9f;
+        float cardSpacing = 2f / Mathf.Max(1f, cardSpawns.Count - 1f) * -leftMostPosition;
+        for (int i = 0; i < cardSpawns.Count; i++) // Align card spawns
+        {
+            if (cardSpawns.Count > 1)
+            {
+                cardSpawns[i].position = new Vector3(leftMostPosition + cardSpacing * i, -3, 0);
+            } else
+            {
+                cardSpawns[i].position = new Vector3(0, -3, 0);
+            }
+        }
+        for (int i = 0; i < amount; i++) // Create and assign cards
+        {
+            var card = Instantiate(cardPrefab, (Vector2)deckPrefab.transform.position, Quaternion.identity);
+            card.GetComponent<CardMovement>().target = cardSpawns[cardSpawns.Count - 1 - i];
+            card.GetComponent<CardDisplay>().card = deck[Random.Range(0, deck.Count)];
+            hand.Add(card.GetComponent<CardDisplay>().card);
+            handObjects.Add(card);
             yield return new WaitForSeconds(0.1f);
         }
-        SetTarget();
     }
 
     private void SetTarget()
@@ -113,10 +156,15 @@ public class GameManager : MonoBehaviour
         }
         foreach (GameObject obj in playedCards)
         {
-            StartCoroutine(drawCard(obj.transform.position));
+            var card = Instantiate(cardPrefab, (Vector2)deckPrefab.transform.position, Quaternion.identity);
+            card.GetComponent<CardDisplay>().card = deck[Random.Range(0, deck.Count)];
+            card.GetComponent<CardMovement>().target = obj.GetComponent<CardMovement>().target;
+            hand.Add(card.GetComponent<CardDisplay>().card);
+            handObjects.Add(card);
             Destroy(obj);
             yield return new WaitForSeconds(0.1f);
         }
+        StartCoroutine(drawCards(1));
         startRound();
     }
 
@@ -176,19 +224,6 @@ public class GameManager : MonoBehaviour
         } else
         {
             moneyText.color = Color.green;
-        }
-    }
-
-    private IEnumerator drawCard(Vector3 position)
-    {
-        var card = Instantiate(cardPrefab, (Vector2)deckPrefab.transform.position, Quaternion.identity);
-        card.GetComponent<CardDisplay>().card = deck[Random.Range(0, deck.Count)];
-        hand.Add(card.GetComponent<CardDisplay>().card);
-        handObjects.Add(card);
-        while (Vector2.Distance(card.transform.position, position) > 0.01f)
-        {
-            card.transform.position += (position - card.transform.position) / 100;
-            yield return new WaitForSeconds(0.001f);
         }
     }
 }
