@@ -28,6 +28,7 @@ public class GameManager : MonoBehaviour
     static public int aceCount = 0;
     private bool guessIsCorrect = false;
     private int wrongGuess;
+    private int threshold = 10;
 
     // Start is called before the first frame update
     void Start()
@@ -38,26 +39,6 @@ public class GameManager : MonoBehaviour
 
     private void setUp()
     {
-        /*
-        float leftMostPosition = 15f / startingCardAmount - 9f;
-        float cardSpacing = 2f / Mathf.Max(1f, startingCardAmount - 1f) * -leftMostPosition;
-        for (int i = 0; i < startingCardAmount; i++)
-        {
-            spawn = Instantiate(cardSpawnPrefab, transform.position, Quaternion.identity);
-            cardSpawns.Add(spawn);
-            drawCards(startingCardAmount);
-            yield return new WaitForSeconds(0.1f);
-            /*
-            if (startingCardAmount > 1)
-            {
-                spawn = Instantiate(cardSpawnPrefab, new Vector2(leftMostPosition + i * cardSpacing, -3), Quaternion.identity);
-            } else
-            {
-                spawn = Instantiate(cardSpawnPrefab, new Vector2(0, -3), Quaternion.identity);
-            }
-            
-        }
-        */
         StartCoroutine(drawCards(startingCardAmount));
         SetTarget();
     }
@@ -144,6 +125,11 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator endRound()
     {
+        if (money > threshold)
+        {
+            threshold += 10 * (hand.Count - startingCardAmount + 1);
+            StartCoroutine(drawCards(1));
+        }
         CardDisplay.letPlayerFlipGlobal = false;
         button.GetComponent<Button>().interactable = false;
         yield return new WaitForSeconds(1);
@@ -164,7 +150,6 @@ public class GameManager : MonoBehaviour
             Destroy(obj);
             yield return new WaitForSeconds(0.1f);
         }
-        StartCoroutine(drawCards(1));
         startRound();
     }
 
