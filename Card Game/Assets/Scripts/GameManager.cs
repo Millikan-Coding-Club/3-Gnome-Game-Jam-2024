@@ -9,15 +9,16 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField] private GameObject cardPrefab;
     public List<Card> deck = new List<Card>();
+    private List<Card> fullDeck = new List<Card>();
     private List<Card> hand = new List<Card>();
     private List<GameObject> handObjects = new List<GameObject>();
     static public List<GameObject> playedCards = new List<GameObject>();
     private List<Transform> cardSpawns = new List<Transform>();
-    private Transform spawn;
     [SerializeField] private Transform cardSpawnPrefab;
     [SerializeField] private TMP_Text targetText;
     [SerializeField] private TMP_Text moneyText;
     [SerializeField] private GameObject button;
+    [SerializeField] private TMP_Text earningsText;
     public GameObject deckPrefab;
 
     [SerializeField] private int startingCardAmount = 3;
@@ -28,11 +29,13 @@ public class GameManager : MonoBehaviour
     static public int aceCount = 0;
     private bool guessIsCorrect = false;
     private int wrongGuess;
-    private int threshold = 10;
+    private int threshold = 20;
+    private int streak = 1;
 
     // Start is called before the first frame update
     void Start()
     {
+        fullDeck = new List<Card>(deck);
         setUp();
         Invoke("flipAllCards", 3);
     }
@@ -55,19 +58,25 @@ public class GameManager : MonoBehaviour
         {
             if (cardSpawns.Count > 1)
             {
-                cardSpawns[i].position = new Vector3(leftMostPosition + cardSpacing * i, -3, 0);
+                cardSpawns[i].position = new Vector3(leftMostPosition + cardSpacing * i, -2, 0);
             } else
             {
-                cardSpawns[i].position = new Vector3(0, -3, 0);
+                cardSpawns[i].position = new Vector3(0, -2, 0);
             }
         }
         for (int i = 0; i < amount; i++) // Create and assign cards
         {
             var card = Instantiate(cardPrefab, (Vector2)deckPrefab.transform.position, Quaternion.identity);
+            int randomCardIndex = Random.Range(0, deck.Count);
             card.GetComponent<CardMovement>().target = cardSpawns[cardSpawns.Count - 1 - i];
-            card.GetComponent<CardDisplay>().card = deck[Random.Range(0, deck.Count)];
+            card.GetComponent<CardDisplay>().card = deck[randomCardIndex];
             hand.Add(card.GetComponent<CardDisplay>().card);
             handObjects.Add(card);
+            deck.RemoveAt(randomCardIndex);
+            if (deck.Count <= 0)
+            {
+                deck = new List<Card>(fullDeck);
+            }
             yield return new WaitForSeconds(0.1f);
         }
     }
@@ -112,9 +121,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void startRound()
+    private void startRound(bool setTarget)
     {
-        SetTarget();
+        if (setTarget) { SetTarget(); }
         playerGuess = 0;
         wrongGuess = 0;
         aceCount = 0;
@@ -125,11 +134,6 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator endRound()
     {
-        if (money > threshold)
-        {
-            threshold += 10 * (hand.Count - startingCardAmount + 1);
-            StartCoroutine(drawCards(1));
-        }
         CardDisplay.letPlayerFlipGlobal = false;
         button.GetComponent<Button>().interactable = false;
         yield return new WaitForSeconds(1);
@@ -143,14 +147,26 @@ public class GameManager : MonoBehaviour
         foreach (GameObject obj in playedCards)
         {
             var card = Instantiate(cardPrefab, (Vector2)deckPrefab.transform.position, Quaternion.identity);
-            card.GetComponent<CardDisplay>().card = deck[Random.Range(0, deck.Count)];
+            int randomCardIndex = Random.Range(0, deck.Count);
+            card.GetComponent<CardDisplay>().card = deck[randomCardIndex];
             card.GetComponent<CardMovement>().target = obj.GetComponent<CardMovement>().target;
             hand.Add(card.GetComponent<CardDisplay>().card);
             handObjects.Add(card);
+            deck.RemoveAt(randomCardIndex);
+            if (deck.Count <= 0)
+            {
+                deck = new List<Card>(fullDeck);
+            }
             Destroy(obj);
             yield return new WaitForSeconds(0.1f);
         }
-        startRound();
+        while (money > threshold)
+        {
+            StartCoroutine(drawCards(1));
+            earningsText.text = hand.Count + " X " + streak;
+            threshold += 20 * Mathf.RoundToInt(Mathf.Pow(hand.Count - startingCardAmount, 2));
+        }
+        startRound(true);
     }
 
     public void play()
@@ -180,16 +196,20 @@ public class GameManager : MonoBehaviour
         if (guessIsCorrect)
         {
             Debug.Log("You winned :)");
-            updateMoney(hand.Count);
+            updateMoney(hand.Count * streak);
             StartCoroutine(endRound());
+            streak++;
+            earningsText.text = hand.Count + " X " + streak;
         } else if (playerGuess != wrongGuess)
         {
             Debug.Log("wronged >:(");
             wrongGuess = playerGuess;
-            updateMoney(-hand.Count);
+            updateMoney(-hand.Count * streak);
+            streak = 0;
+            earningsText.text = hand.Count + " X " + streak;
             if (playerGuess > target)
             {
-                startRound();
+                startRound(false);
             }
         }
     }
@@ -210,5 +230,10 @@ public class GameManager : MonoBehaviour
         {
             moneyText.color = Color.green;
         }
+    }
+
+    public void endGame()
+    {
+        Debug.Log("Game end");
     }
 }
