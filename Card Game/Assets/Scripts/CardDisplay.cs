@@ -9,6 +9,7 @@ public class CardDisplay : MonoBehaviour
     public Card card;
     public Canvas cardCanvas;
     public Image cardImage;
+    public AudioSource flipAudio;
 
     private bool letPlayerFlip = false;
     static public bool letPlayerFlipGlobal = true;
@@ -38,6 +39,7 @@ public class CardDisplay : MonoBehaviour
 
     public IEnumerator flipCard(bool addCard)
     {
+        flipAudio.Play();
         float yRotation = cardImage.transform.rotation.eulerAngles.y;
         if (!isFlipped)
         {

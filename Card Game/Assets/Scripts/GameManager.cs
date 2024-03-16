@@ -4,6 +4,7 @@ using UnityEngine;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -20,6 +21,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject button;
     [SerializeField] private TMP_Text earningsText;
     public GameObject deckPrefab;
+    public AudioSource drawAudio;
+    public AudioSource wrongAudio;
+    public AudioSource correctAudio;
 
     [SerializeField] private int startingCardAmount = 3;
     static public int target = 0;
@@ -36,12 +40,13 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         fullDeck = new List<Card>(deck);
-        setUp();
+        StartCoroutine(setUp(1));
         Invoke("flipAllCards", 3);
     }
 
-    private void setUp()
+    private IEnumerator setUp(float delay)
     {
+        yield return new WaitForSeconds(delay);
         StartCoroutine(drawCards(startingCardAmount));
         SetTarget();
     }
@@ -77,6 +82,7 @@ public class GameManager : MonoBehaviour
             {
                 deck = new List<Card>(fullDeck);
             }
+            drawAudio.Play();
             yield return new WaitForSeconds(0.1f);
         }
     }
@@ -157,6 +163,7 @@ public class GameManager : MonoBehaviour
             {
                 deck = new List<Card>(fullDeck);
             }
+            drawAudio.Play();
             Destroy(obj);
             yield return new WaitForSeconds(0.1f);
         }
@@ -195,14 +202,15 @@ public class GameManager : MonoBehaviour
 
         if (guessIsCorrect)
         {
-            Debug.Log("You winned :)");
+            correctAudio.pitch = 1 + (Mathf.Max(1, streak) - 1) * 0.01f;
+            correctAudio.Play();
             updateMoney(hand.Count * streak);
             StartCoroutine(endRound());
             streak++;
             earningsText.text = hand.Count + " X " + streak;
         } else if (playerGuess != wrongGuess)
         {
-            Debug.Log("wronged >:(");
+            wrongAudio.Play();
             wrongGuess = playerGuess;
             updateMoney(-hand.Count * streak);
             streak = 0;
@@ -234,6 +242,6 @@ public class GameManager : MonoBehaviour
 
     public void endGame()
     {
-        Debug.Log("Game end");
+        SceneManager.LoadScene("Main Menu");
     }
 }
