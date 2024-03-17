@@ -10,6 +10,7 @@ public class CardDisplay : MonoBehaviour
     public Canvas cardCanvas;
     public Image cardImage;
     public AudioSource flipAudio;
+    private GameObject leaveButton;
 
     private bool letPlayerFlip = false;
     static public bool letPlayerFlipGlobal = true;
@@ -19,6 +20,7 @@ public class CardDisplay : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        leaveButton = GameObject.Find("LeaveTableButton");
         cardImage.sprite = card.faceSprite;
     }
 
@@ -27,6 +29,7 @@ public class CardDisplay : MonoBehaviour
         cardImage.color = Color.white;
         if (letPlayerFlip && letPlayerFlipGlobal)
         {
+            leaveButton.GetComponent<Button>().interactable = false;
             flip(true);
             GameManager.playedCards.Add(gameObject);
         }

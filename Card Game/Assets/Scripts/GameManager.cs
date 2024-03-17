@@ -19,7 +19,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text targetText;
     [SerializeField] private TMP_Text moneyText;
     [SerializeField] private GameObject button;
-    [SerializeField] private TMP_Text earningsText;
+    [SerializeField] private TMP_Text streakText;
+    [SerializeField] private Button leaveButton;
+    [SerializeField] private GameObject shopCanvas;
+    public Card joker_red;
+    public Card joker_black;
     public GameObject deckPrefab;
     public AudioSource drawAudio;
     public AudioSource wrongAudio;
@@ -129,6 +133,7 @@ public class GameManager : MonoBehaviour
 
     private void startRound(bool setTarget)
     {
+        leaveButton.interactable = true;
         if (setTarget) { SetTarget(); }
         playerGuess = 0;
         wrongGuess = 0;
@@ -170,10 +175,17 @@ public class GameManager : MonoBehaviour
         while (money > threshold)
         {
             StartCoroutine(drawCards(1));
-            earningsText.text = hand.Count + " X " + streak;
+            streakText.text = streak.ToString();
             threshold += 20 * Mathf.RoundToInt(Mathf.Pow(hand.Count - startingCardAmount, 2));
+            OpenShop();
         }
         startRound(true);
+    }
+
+    private void OpenShop()
+    {
+        Time.timeScale = 0f;
+        shopCanvas.SetActive(true);
     }
 
     public void play()
@@ -207,14 +219,14 @@ public class GameManager : MonoBehaviour
             updateMoney(hand.Count * streak);
             StartCoroutine(endRound());
             streak++;
-            earningsText.text = hand.Count + " X " + streak;
+            streakText.text = streak.ToString();
         } else if (playerGuess != wrongGuess)
         {
             wrongAudio.Play();
             wrongGuess = playerGuess;
             updateMoney(-hand.Count * streak);
             streak = 0;
-            earningsText.text = hand.Count + " X " + streak;
+            streakText.text = streak.ToString();
             if (playerGuess > target)
             {
                 startRound(false);
