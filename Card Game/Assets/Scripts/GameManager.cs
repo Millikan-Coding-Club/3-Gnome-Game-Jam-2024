@@ -5,6 +5,7 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.Runtime.CompilerServices;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,16 +13,23 @@ public class GameManager : MonoBehaviour
     public List<Card> deck = new List<Card>();
     private List<Card> fullDeck = new List<Card>();
     private List<Card> hand = new List<Card>();
-    private List<GameObject> handObjects = new List<GameObject>();
+    public List<GameObject> handObjects = new List<GameObject>();
     static public List<GameObject> playedCards = new List<GameObject>();
     private List<Transform> cardSpawns = new List<Transform>();
     [SerializeField] private Transform cardSpawnPrefab;
     [SerializeField] private TMP_Text targetText;
     [SerializeField] private TMP_Text moneyText;
-    [SerializeField] private GameObject button;
+    [SerializeField] private GameObject playCardsButton;
     [SerializeField] private TMP_Text streakText;
     [SerializeField] private Button leaveButton;
     [SerializeField] private GameObject shopCanvas;
+    [SerializeField] private GameObject itemsPanel;
+    [SerializeField] private GameObject itemPrefab;
+    [SerializeField] private TMP_Text handSizeText1;
+    [SerializeField] private TMP_Text handSizeText2;
+    [SerializeField] private GameObject itemBarPanel;
+    [SerializeField] private GameObject itemIndicatorPrefab;
+    private List<GameObject> activeItems = new List<GameObject>();
     public Card joker_red;
     public Card joker_black;
     public GameObject deckPrefab;
@@ -31,14 +39,15 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private int startingCardAmount = 3;
     static public int target = 0;
-    private int money = 0;
+    static public int money = 0;
     private int targetCardCount;
     static public int playerGuess = 0;
     static public int aceCount = 0;
     private bool guessIsCorrect = false;
     private int wrongGuess;
     private int threshold = 20;
-    private int streak = 1;
+    private int streak = 0;
+    public int shieldCount = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -55,43 +64,61 @@ public class GameManager : MonoBehaviour
         SetTarget();
     }
 
-    private IEnumerator drawCards(int amount)
+    private void AlignCards()
     {
-        for (int i = 0; i < amount; i++) // Create card spawns
-        {
-            cardSpawns.Add(Instantiate(cardSpawnPrefab, transform.position, Quaternion.identity));
-        }
         float leftMostPosition = 20f / cardSpawns.Count - 9f;
         float cardSpacing = 2f / Mathf.Max(1f, cardSpawns.Count - 1f) * -leftMostPosition;
-        for (int i = 0; i < cardSpawns.Count; i++) // Align card spawns
+        for (int i = 0; i < cardSpawns.Count; i++)
         {
             if (cardSpawns.Count > 1)
             {
                 cardSpawns[i].position = new Vector3(leftMostPosition + cardSpacing * i, -2, 0);
-            } else
+            }
+            else
             {
                 cardSpawns[i].position = new Vector3(0, -2, 0);
             }
         }
-        for (int i = 0; i < amount; i++) // Create and assign cards
+    }
+
+    private IEnumerator drawCards(int amount)
+    {
+        if (amount < 0)
         {
-            var card = Instantiate(cardPrefab, (Vector2)deckPrefab.transform.position, Quaternion.identity);
-            int randomCardIndex = Random.Range(0, deck.Count);
-            card.GetComponent<CardMovement>().target = cardSpawns[cardSpawns.Count - 1 - i];
-            card.GetComponent<CardDisplay>().card = deck[randomCardIndex];
-            hand.Add(card.GetComponent<CardDisplay>().card);
-            handObjects.Add(card);
-            deck.RemoveAt(randomCardIndex);
-            if (deck.Count <= 0)
+            for (int i = 0;  i > amount; i--)
             {
-                deck = new List<Card>(fullDeck);
+                cardSpawns.RemoveAt(cardSpawns.Count - 1);
             }
-            drawAudio.Play();
-            yield return new WaitForSeconds(0.1f);
+            AlignCards();
+        } else
+        {
+            for (int i = 0; i < amount; i++) // Create card spawns
+            {
+                cardSpawns.Add(Instantiate(cardSpawnPrefab, transform.position, Quaternion.identity));
+            }
+            AlignCards();
+            for (int i = 0; i < amount; i++) // Create and assign cards
+            {
+                var card = Instantiate(cardPrefab, (Vector2)deckPrefab.transform.position, Quaternion.identity);
+                int randomCardIndex = Random.Range(0, deck.Count);
+                card.GetComponent<CardMovement>().target = cardSpawns[cardSpawns.Count - 1 - i];
+                card.GetComponent<CardDisplay>().card = deck[randomCardIndex];
+                hand.Add(card.GetComponent<CardDisplay>().card);
+                handSizeText1.text = hand.Count.ToString();
+                handSizeText2.text = hand.Count.ToString();
+                handObjects.Add(card);
+                deck.RemoveAt(randomCardIndex);
+                if (deck.Count <= 0)
+                {
+                    deck = new List<Card>(fullDeck);
+                }
+                drawAudio.Play();
+                yield return new WaitForSeconds(0.1f);
+            }
         }
     }
 
-    private void SetTarget()
+    public void SetTarget()
     {
         target = 0;
         targetCardCount = Random.Range(1, hand.Count);
@@ -126,7 +153,7 @@ public class GameManager : MonoBehaviour
         }
         if (!guessIsCorrect)
         {
-            button.GetComponent<Button>().interactable = true;
+            playCardsButton.GetComponent<Button>().interactable = true;
             CardDisplay.letPlayerFlipGlobal = true;
         }
     }
@@ -145,8 +172,15 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator endRound()
     {
+        while (money > threshold)
+        {
+            StartCoroutine(drawCards(1));
+            streakText.text = streak.ToString();
+            threshold += 20 * Mathf.RoundToInt(Mathf.Pow(hand.Count - startingCardAmount + 1, 2));
+            OpenShop();
+        }
         CardDisplay.letPlayerFlipGlobal = false;
-        button.GetComponent<Button>().interactable = false;
+        playCardsButton.GetComponent<Button>().interactable = false;
         yield return new WaitForSeconds(1);
 
         foreach (GameObject obj in playedCards)
@@ -162,6 +196,8 @@ public class GameManager : MonoBehaviour
             card.GetComponent<CardDisplay>().card = deck[randomCardIndex];
             card.GetComponent<CardMovement>().target = obj.GetComponent<CardMovement>().target;
             hand.Add(card.GetComponent<CardDisplay>().card);
+            handSizeText1.text = hand.Count.ToString();
+            handSizeText2.text = hand.Count.ToString();
             handObjects.Add(card);
             deck.RemoveAt(randomCardIndex);
             if (deck.Count <= 0)
@@ -172,25 +208,78 @@ public class GameManager : MonoBehaviour
             Destroy(obj);
             yield return new WaitForSeconds(0.1f);
         }
-        while (money > threshold)
-        {
-            StartCoroutine(drawCards(1));
-            streakText.text = streak.ToString();
-            threshold += 20 * Mathf.RoundToInt(Mathf.Pow(hand.Count - startingCardAmount, 2));
-            OpenShop();
-        }
         startRound(true);
     }
 
     private void OpenShop()
     {
         Time.timeScale = 0f;
+        for (int i = 0; i < 3; i++)
+        {
+            GameObject newItem = Instantiate(itemPrefab, transform.position, Quaternion.identity, itemsPanel.transform);
+            activeItems.Add(newItem);
+        }
         shopCanvas.SetActive(true);
     }
 
-    public void play()
+    public void GainItem(GameObject button, Item item)
     {
-        playCards();
+        button.GetComponent<Button>().interactable = false;
+        button.GetComponent<ItemDisplay>().soldOutOverlay.SetActive(true);
+        switch (item.Name)
+        {
+            case "Discard":
+                drawCards(-1);
+                break;
+            case "Streak Increase":
+                streak++;
+                streakText.text = streak.ToString();
+                break;
+            case "Draw Card":
+                drawCards(1);
+                break;
+            case "Joker":
+                if (Random.Range(0, 2) == 0)
+                {
+                    deck.Add(joker_red);
+                    fullDeck.Add(joker_red);
+                } else
+                {
+                    deck.Add(joker_black);
+                    fullDeck.Add(joker_black);
+                }
+                break;
+            case "Reroll":
+                AddItemToItemBar(item);
+                break;
+            case "Reveal Hand":
+                AddItemToItemBar(item);
+                break;
+            case "Shield":
+                AddItemToItemBar(item);
+                break;
+        }
+    }
+
+    private void AddItemToItemBar(Item item)
+    {
+        GameObject newItem = Instantiate(itemIndicatorPrefab, transform.position, Quaternion.identity, itemBarPanel.transform);
+        newItem.GetComponent<ItemIndicator>().item = item;
+        if (item.Name == "Shield")
+        {
+            newItem.tag = "Shield";
+        }
+    }
+
+    public void CloseShop()
+    {
+        shopCanvas.SetActive(false);
+        foreach (GameObject obj in activeItems)
+        {
+            Destroy(obj);
+        }
+        activeItems.Clear();
+        Time.timeScale = 1f;
     }
 
     public void playCards()
@@ -216,20 +305,39 @@ public class GameManager : MonoBehaviour
         {
             correctAudio.pitch = 1 + (Mathf.Max(1, streak) - 1) * 0.01f;
             correctAudio.Play();
-            updateMoney(hand.Count * streak);
+            updateMoney(hand.Count + hand.Count * streak);
             StartCoroutine(endRound());
             streak++;
             streakText.text = streak.ToString();
         } else if (playerGuess != wrongGuess)
         {
-            wrongAudio.Play();
-            wrongGuess = playerGuess;
-            updateMoney(-hand.Count * streak);
-            streak = 0;
-            streakText.text = streak.ToString();
-            if (playerGuess > target)
+            if (shieldCount == 0)
+            {
+                wrongAudio.Play();
+                wrongGuess = playerGuess;
+                updateMoney(-hand.Count - hand.Count * streak);
+                streak = 0;
+                streakText.text = streak.ToString();
+                if (playerGuess > target)
+                {
+                    startRound(false);
+                }
+            } else
             {
                 startRound(false);
+                shieldCount--;
+                if (shieldCount == 1)
+                {
+                    Destroy(GameObject.FindGameObjectWithTag("Shield"));
+                } else
+                {
+                    GameObject amount = GameObject.FindGameObjectWithTag("Shield").GetComponent<ItemIndicator>().amount;
+                    amount.GetComponent<TMP_Text>().text = "x" + shieldCount;
+                    if (shieldCount <= 0)
+                    {
+                        amount.SetActive(false);
+                    }
+                }
             }
         }
     }

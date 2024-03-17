@@ -53,7 +53,7 @@ MonoBehaviour:
   cardImage: {fileID: 4887827776601671660}
   flipAudio: {fileID: 5230580207406389998}
   isFlipped: 0
-  flipSpeed: 1250
+  flipSpeed: 1500
 --- !u!114 &5183470864360961698
 MonoBehaviour:
   m_ObjectHideFlags: 0
