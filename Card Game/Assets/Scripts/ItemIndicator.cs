@@ -70,6 +70,7 @@ public class ItemIndicator : MonoBehaviour
     public void UpdateAmount(int count)
     {
         amount += count;
+        amountObject.GetComponent<TMP_Text>().text = "x" + amount.ToString();
         if (amount > 1)
         {
             gameManager.playerItems.Add(item);

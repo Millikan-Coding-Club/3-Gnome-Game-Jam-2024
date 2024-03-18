@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
     static public List<GameObject> playedCards = new List<GameObject>();
     private List<Transform> cardSpawns = new List<Transform>();
     public List<Item> playerItems = new List<Item>();
+    private List<GameObject> playerItemObjects = new List<GameObject>();
     [SerializeField] private Transform cardSpawnPrefab;
     [SerializeField] private TMP_Text targetText;
     [SerializeField] private TMP_Text moneyText;
@@ -45,12 +46,29 @@ public class GameManager : MonoBehaviour
     private int targetCardCount;
     static public int playerGuess = 0;
     static public int aceCount = 0;
-    private bool guessIsCorrect = false;
+    static public bool guessIsCorrect = false;
     private int wrongGuess;
     private int threshold = 20;
     private int streak = 0;
     public int shieldCount = 0;
 
+    private void Awake()
+    {
+        while (deck.Count > 52)
+        {
+            deck.RemoveAt(deck.Count - 1);
+        }
+        handObjects.Clear();
+        streak = 0;
+        money = 0;
+        hand.Clear();
+        shieldCount = 0;
+        aceCount = 0;
+        activeItems.Clear();
+        cardSpawns.Clear();
+        playerItems.Clear();
+        playerItemObjects.Clear();
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -182,9 +200,12 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator endRound()
     {
-        while (money > threshold)
+        if (money > threshold)
         {
             OpenShop();
+        }
+        while (money > threshold)
+        {
             StartCoroutine(drawCards(-1));
             streakText.text = streak.ToString();
             threshold += 20 * Mathf.RoundToInt(Mathf.Pow(hand.Count - startingCardAmount + 1, 2));
@@ -289,11 +310,12 @@ public class GameManager : MonoBehaviour
     {
         if (playerItems.Contains(item))
         {
-            playerItems[playerItems.IndexOf(item)].GetComponent<ItemIndicator>().UpdateAmount(1);
+            playerItemObjects[playerItems.IndexOf(item)].GetComponent<ItemIndicator>().UpdateAmount(1);
         } else
         {
             playerItems.Add(item);
             GameObject newItem = Instantiate(itemIndicatorPrefab, transform.position, Quaternion.identity, itemBarPanel.transform);
+            playerItemObjects.Add(newItem);
             newItem.GetComponent<ItemIndicator>().item = item;
             if (item.Name == "Shield")
             {

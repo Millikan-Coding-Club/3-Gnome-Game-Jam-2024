@@ -66,6 +66,10 @@ public class CardDisplay : MonoBehaviour
             // Card is face down
             if (addCard) { GameManager.playerGuess += card.value; }
             if (card.value == 1 && addCard) { GameManager.aceCount++; }
+            if (card.value == 0)
+            {
+                GameManager.guessIsCorrect = true;
+            }
             letPlayerFlip = false;
             for (int i = 180; i > 0; i--)
             {

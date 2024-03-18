@@ -422,7 +422,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: 0}
-  amount: {fileID: 2505255105340118621}
+  amountObject: {fileID: 2505255105340118621}
   icon: {fileID: 3851508318126313484}
   nameText: {fileID: 4860880249896917007}
 --- !u!114 &8615526691633799631
