@@ -14,26 +14,37 @@ public class ItemDisplay : MonoBehaviour
     [SerializeField] private TMP_Text itemPriceText;
     [SerializeField] private Button itemButton;
     [SerializeField] public GameObject soldOutOverlay;
-    [SerializeField] public GameManager gameManager;
+    private GameManager gameManager;
+
+    public int price;
 
     void Awake()
     {
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         item = items[Random.Range(0, items.Count)];
         itemButton.onClick.AddListener(() => { gameManager.GainItem(gameObject, item); });
         itemIcon.sprite = item.Icon;
         itemNameText.text = item.Name;
         itemDescriptionText.text = item.Description;
-        if (item.Price < 0)
+        UpdatePrice();
+    }
+
+    public void UpdatePrice()
+    {
+        price = item.Price + item.Price * Mathf.CeilToInt((gameManager.handObjects.Count - 3) / 10);
+        if (price < 0)
         {
-            itemPriceText.text = "-$" + Mathf.Abs(item.Price);
-        } else
-        {
-            itemPriceText.text = "$" + item.Price;
+            itemPriceText.text = "-$" + Mathf.Abs(price);
         }
-        if (item.Price <= GameManager.money)
+        else
+        {
+            itemPriceText.text = "$" + price;
+        }
+        if (price <= GameManager.money)
         {
             itemPriceText.color = Color.green;
-        } else
+        }
+        else
         {
             itemPriceText.color = Color.red;
         }

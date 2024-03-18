@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     public List<GameObject> handObjects = new List<GameObject>();
     static public List<GameObject> playedCards = new List<GameObject>();
     private List<Transform> cardSpawns = new List<Transform>();
+    public List<Item> playerItems = new List<Item>();
     [SerializeField] private Transform cardSpawnPrefab;
     [SerializeField] private TMP_Text targetText;
     [SerializeField] private TMP_Text moneyText;
@@ -29,6 +30,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text handSizeText2;
     [SerializeField] private GameObject itemBarPanel;
     [SerializeField] private GameObject itemIndicatorPrefab;
+    [SerializeField] private Button emptyButton;
     private List<GameObject> activeItems = new List<GameObject>();
     public Card joker_red;
     public Card joker_black;
@@ -85,9 +87,14 @@ public class GameManager : MonoBehaviour
     {
         if (amount < 0)
         {
-            for (int i = 0;  i > amount; i--)
+            for (int i = amount; i > 0; i--)
             {
+                Destroy(cardSpawns[cardSpawns.Count - 1].parent);
                 cardSpawns.RemoveAt(cardSpawns.Count - 1);
+                playedCards.Remove(handObjects[handObjects.Count - 1]);
+                hand.RemoveAt(hand.Count - 1);
+                Destroy(handObjects[handObjects.Count - 1]);
+                handObjects.RemoveAt(handObjects.Count - 1);
             }
             AlignCards();
         } else
@@ -131,6 +138,9 @@ public class GameManager : MonoBehaviour
                 if (handCopy[rand].value == 1 && Random.Range(0, 1) == 1) // 1/2 chance to add 11 instead of 1 for aces
                 {
                     target += 11;
+                } else if (handCopy[rand].value == 0) // Card is a joker. Choose another card to add
+                {
+                    targetCardCount++;
                 } else
                 {
                     target += handCopy[rand].value;
@@ -174,10 +184,10 @@ public class GameManager : MonoBehaviour
     {
         while (money > threshold)
         {
-            StartCoroutine(drawCards(1));
+            OpenShop();
+            StartCoroutine(drawCards(-1));
             streakText.text = streak.ToString();
             threshold += 20 * Mathf.RoundToInt(Mathf.Pow(hand.Count - startingCardAmount + 1, 2));
-            OpenShop();
         }
         CardDisplay.letPlayerFlipGlobal = false;
         playCardsButton.GetComponent<Button>().interactable = false;
@@ -208,12 +218,15 @@ public class GameManager : MonoBehaviour
             Destroy(obj);
             yield return new WaitForSeconds(0.1f);
         }
+        while (shopCanvas.activeSelf)
+        {
+            yield return null;
+        }
         startRound(true);
     }
 
     private void OpenShop()
     {
-        Time.timeScale = 0f;
         for (int i = 0; i < 3; i++)
         {
             GameObject newItem = Instantiate(itemPrefab, transform.position, Quaternion.identity, itemsPanel.transform);
@@ -224,50 +237,68 @@ public class GameManager : MonoBehaviour
 
     public void GainItem(GameObject button, Item item)
     {
-        button.GetComponent<Button>().interactable = false;
-        button.GetComponent<ItemDisplay>().soldOutOverlay.SetActive(true);
-        switch (item.Name)
+        correctAudio.Play();
+        emptyButton.Select();
+        if (item.Price <= money)
         {
-            case "Discard":
-                drawCards(-1);
-                break;
-            case "Streak Increase":
-                streak++;
-                streakText.text = streak.ToString();
-                break;
-            case "Draw Card":
-                drawCards(1);
-                break;
-            case "Joker":
-                if (Random.Range(0, 2) == 0)
-                {
-                    deck.Add(joker_red);
-                    fullDeck.Add(joker_red);
-                } else
-                {
-                    deck.Add(joker_black);
-                    fullDeck.Add(joker_black);
-                }
-                break;
-            case "Reroll":
-                AddItemToItemBar(item);
-                break;
-            case "Reveal Hand":
-                AddItemToItemBar(item);
-                break;
-            case "Shield":
-                AddItemToItemBar(item);
-                break;
+            button.GetComponent<Button>().interactable = false;
+            button.GetComponent<ItemDisplay>().soldOutOverlay.SetActive(true);
+            updateMoney(-button.GetComponent<ItemDisplay>().price);
+            foreach (GameObject obj in activeItems)
+            {
+                obj.GetComponent<ItemDisplay>().UpdatePrice();
+            }
+            switch (item.Name)
+            {
+                case "Discard":
+                    StartCoroutine(drawCards(-1));
+                    break;
+                case "Streak Increase":
+                    streak += hand.Count - 1;
+                    streakText.text = streak.ToString();
+                    break;
+                case "Draw Card":
+                    StartCoroutine(drawCards(1));
+                    break;
+                case "Joker":
+                    if (Random.Range(0, 2) == 0)
+                    {
+                        deck.Add(joker_red);
+                        fullDeck.Add(joker_red);
+                    }
+                    else
+                    {
+                        deck.Add(joker_black);
+                        fullDeck.Add(joker_black);
+                    }
+                    break;
+                case "Reroll":
+                    AddItemToItemBar(item);
+                    break;
+                case "Reveal Hand":
+                    AddItemToItemBar(item);
+                    break;
+                case "Shield":
+                    AddItemToItemBar(item);
+                    break;
+            }
         }
     }
 
     private void AddItemToItemBar(Item item)
     {
-        GameObject newItem = Instantiate(itemIndicatorPrefab, transform.position, Quaternion.identity, itemBarPanel.transform);
-        newItem.GetComponent<ItemIndicator>().item = item;
-        if (item.Name == "Shield")
+        if (playerItems.Contains(item))
         {
-            newItem.tag = "Shield";
+            playerItems[playerItems.IndexOf(item)].GetComponent<ItemIndicator>().UpdateAmount(1);
+        } else
+        {
+            playerItems.Add(item);
+            GameObject newItem = Instantiate(itemIndicatorPrefab, transform.position, Quaternion.identity, itemBarPanel.transform);
+            newItem.GetComponent<ItemIndicator>().item = item;
+            if (item.Name == "Shield")
+            {
+                newItem.tag = "Shield";
+            }
         }
     }
 
@@ -318,26 +349,12 @@ public class GameManager : MonoBehaviour
                 updateMoney(-hand.Count - hand.Count * streak);
                 streak = 0;
                 streakText.text = streak.ToString();
-                if (playerGuess > target)
-                {
-                    startRound(false);
-                }
+                startRound(false);
             } else
             {
                 startRound(false);
                 shieldCount--;
-                if (shieldCount == 1)
-                {
-                    Destroy(GameObject.FindGameObjectWithTag("Shield"));
-                } else
-                {
-                    GameObject amount = GameObject.FindGameObjectWithTag("Shield").GetComponent<ItemIndicator>().amount;
-                    amount.GetComponent<TMP_Text>().text = "x" + shieldCount;
-                    if (shieldCount <= 0)
-                    {
-                        amount.SetActive(false);
-                    }
-                }
+                GameObject.FindGameObjectWithTag("Shield").GetComponent<ItemIndicator>().UpdateAmount(-1);
             }
         }
     }

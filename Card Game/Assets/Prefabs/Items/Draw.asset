@@ -15,4 +15,4 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: fbccca73d29a7894e83e2d9b52192719, type: 3}
   Name: Draw Card
   Description: Draw one card from the deck into your hand
-  Price: -50
+  Price: -100
