@@ -206,7 +206,7 @@ public class GameManager : MonoBehaviour
         }
         while (money > threshold)
         {
-            StartCoroutine(drawCards(-1));
+            StartCoroutine(drawCards(1));
             streakText.text = streak.ToString();
             threshold += 20 * Mathf.RoundToInt(Mathf.Pow(hand.Count - startingCardAmount + 1, 2));
         }
